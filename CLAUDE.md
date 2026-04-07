@@ -35,6 +35,7 @@ src/
 ### Code Conventions
 
 #### Exports
+
 ```typescript
 // ✅ Good - Named exports
 export function processData(input: string): Result {
@@ -52,11 +53,13 @@ export default function processData(input: string): Result {
 ```
 
 #### File Organization
+
 - Each file should export related functionality for a single concern
 - Keep files focused and cohesive
 - Use barrel exports (index.ts) sparingly, only for public APIs
 
 #### Naming Conventions
+
 - **Files**: kebab-case (e.g., `user-service.ts`, `venture-scraper.ts`)
 - **Functions**: camelCase (e.g., `fetchVentureData`, `processAnalysis`)
 - **Classes**: PascalCase (e.g., `VentureScraper`, `DatabaseClient`)

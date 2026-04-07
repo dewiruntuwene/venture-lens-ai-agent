@@ -28,21 +28,25 @@ An AI-powered venture capital analysis platform that scrapes venture information
 ### Installation
 
 1. Install dependencies:
+
 ```bash
 bun install
 ```
 
 2. Install Playwright browsers:
+
 ```bash
 bunx playwright install chromium
 ```
 
 3. Set up git hooks (Lefthook):
+
 ```bash
 bun run prepare
 ```
 
 4. Configure environment:
+
 ```bash
 cp .env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
@@ -105,14 +109,17 @@ The project follows clean architecture principles with modular, single-responsib
 The project uses automated checks via Lefthook git hooks:
 
 **Pre-commit hooks:**
+
 - Prettier formatting (auto-formats staged files)
 - TypeScript type checking
 
 **Pre-push hooks:**
+
 - Prettier format verification
 - TypeScript type checking
 
 **Manual commands:**
+
 ```bash
 bun run format        # Format all files with Prettier
 bun run format:check  # Check formatting without changes

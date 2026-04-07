@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import { initDatabase, insertVenture } from '../db/database.js';
+import { initDatabase, insertCompany, type CompanyData } from '../db/database.js';
 
 export interface ScraperOptions {
   url: string;
@@ -7,10 +7,10 @@ export interface ScraperOptions {
   timeout?: number;
 }
 
-export async function scrapeVenture(options: ScraperOptions) {
+export async function scrapeCompany(options: ScraperOptions): Promise<CompanyData> {
   const { url, headless = true, timeout = 30000 } = options;
 
-  console.log(`Scraping venture from: ${url}`);
+  console.log(`Scraping company from: ${url}`);
 
   const browser = await chromium.launch({ headless });
 
@@ -18,35 +18,43 @@ export async function scrapeVenture(options: ScraperOptions) {
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout });
 
-    // Extract venture information
+    // Extract company information
     // Note: page.evaluate runs in browser context where DOM APIs are available
-    const ventureData = await page.evaluate(() => {
+    const companyData = await page.evaluate(() => {
       const getTextContent = (selector: string): string => {
         const element = (globalThis as any).document.querySelector(selector);
         return element?.textContent?.trim() || '';
       };
 
+      const getMetaContent = (name: string): string => {
+        const element = (globalThis as any).document.querySelector(
+          `meta[name="${name}"], meta[property="${name}"]`
+        );
+        return element?.getAttribute('content') || '';
+      };
+
       // Generic selectors - adjust based on actual target sites
-      const name = getTextContent('h1') || (globalThis as any).document.title;
+      const companyName = getTextContent('h1') || (globalThis as any).document.title;
       const description =
-        getTextContent('meta[name="description"]') ||
-        getTextContent('p') ||
-        'No description available';
+        getMetaContent('description') || getTextContent('p') || 'No description available';
 
       return {
-        name,
+        companyName,
         description,
+        industry: 'Unknown',
+        businessModel: 'Unknown',
+        summary: description,
+        useCase: 'Unknown',
       };
     });
 
-    console.log('Scraped data:', ventureData);
+    console.log('Scraped data:', companyData);
 
     return {
-      ...ventureData,
-      url,
+      ...companyData,
+      website: url,
       scrapedAt: new Date().toISOString(),
     };
-
   } catch (error) {
     console.error('Scraping error:', error);
     throw error;
@@ -60,15 +68,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const targetUrl = process.argv[2];
 
   if (!targetUrl) {
-    console.error('Usage: npm run scrape <url>');
+    console.error('Usage: bun run scrape <url>');
     process.exit(1);
   }
 
-  scrapeVenture({ url: targetUrl })
+  scrapeCompany({ url: targetUrl })
     .then((data) => {
       const db = initDatabase();
-      const id = insertVenture(db, data);
-      console.log(`✓ Venture saved to database with ID: ${id}`);
+      const id = insertCompany(db, data);
+      console.log(`✓ Company saved to database with ID: ${id}`);
       db.close();
     })
     .catch((error) => {
