@@ -37,7 +37,12 @@ bun install
 bunx playwright install chromium
 ```
 
-3. Configure environment:
+3. Set up git hooks (Lefthook):
+```bash
+bun run prepare
+```
+
+4. Configure environment:
 ```bash
 cp .env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
@@ -94,6 +99,25 @@ src/
 ## Development
 
 The project follows clean architecture principles with modular, single-responsibility components. See [CLAUDE.md](./CLAUDE.md) for detailed coding guidelines.
+
+### Code Quality
+
+The project uses automated checks via Lefthook git hooks:
+
+**Pre-commit hooks:**
+- Prettier formatting (auto-formats staged files)
+- TypeScript type checking
+
+**Pre-push hooks:**
+- Prettier format verification
+- TypeScript type checking
+
+**Manual commands:**
+```bash
+bun run format        # Format all files with Prettier
+bun run format:check  # Check formatting without changes
+bun run type-check    # Run TypeScript type checking
+```
 
 ## License
 

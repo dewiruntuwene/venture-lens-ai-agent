@@ -7,7 +7,11 @@
     "dev": "bun --watch src/api/index.ts",
     "scrape": "bun src/scraper/scrape.ts",
     "analyze": "bun src/agents/analyzer.ts",
-    "start": "bun src/api/index.ts"
+    "start": "bun src/api/index.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "prepare": "lefthook install"
   },
   "keywords": [
     "venture-capital",
@@ -19,13 +23,17 @@
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "@hono/node-server": "^1.14.0",
     "better-sqlite3": "^11.8.1",
     "hono": "^4.6.16",
     "playwright": "^1.49.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/bun": "^1.1.15",
     "@types/node": "^22.10.5",
+    "lefthook": "^1.9.5",
+    "prettier": "^3.4.2",
     "typescript": "^5.7.3"
   }
 }

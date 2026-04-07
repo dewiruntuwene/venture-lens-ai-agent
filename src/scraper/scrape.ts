@@ -19,17 +19,19 @@ export async function scrapeVenture(options: ScraperOptions) {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout });
 
     // Extract venture information
+    // Note: page.evaluate runs in browser context where DOM APIs are available
     const ventureData = await page.evaluate(() => {
       const getTextContent = (selector: string): string => {
-        const element = document.querySelector(selector);
+        const element = (globalThis as any).document.querySelector(selector);
         return element?.textContent?.trim() || '';
       };
 
       // Generic selectors - adjust based on actual target sites
-      const name = getTextContent('h1') || document.title;
-      const description = getTextContent('meta[name="description"]') ||
-                         getTextContent('p') ||
-                         'No description available';
+      const name = getTextContent('h1') || (globalThis as any).document.title;
+      const description =
+        getTextContent('meta[name="description"]') ||
+        getTextContent('p') ||
+        'No description available';
 
       return {
         name,

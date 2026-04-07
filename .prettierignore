@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+bun.lockb
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Database files
+data/
+
+# Git
+.git/
+
+# Logs
+logs/
+*.log
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
