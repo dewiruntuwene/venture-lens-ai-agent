@@ -1,0 +1,31 @@
+{
+  "name": "venture-lens-ai-agent",
+  "version": "1.0.0",
+  "description": "AI-powered venture capital analysis platform",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/api/index.ts",
+    "scrape": "bun src/scraper/scrape.ts",
+    "analyze": "bun src/agents/analyzer.ts",
+    "start": "bun src/api/index.ts"
+  },
+  "keywords": [
+    "venture-capital",
+    "ai",
+    "analysis",
+    "scraper"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "better-sqlite3": "^11.8.1",
+    "hono": "^4.6.16",
+    "playwright": "^1.49.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.3"
+  }
+}
