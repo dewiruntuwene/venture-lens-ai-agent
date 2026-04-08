@@ -3,7 +3,7 @@ pre-commit:
   commands:
     format:
       glob: '*.{ts,js,json,md}'
-      run: prettier --write {staged_files} && git add {staged_files}
+      run: bunx prettier --write {staged_files} && git add {staged_files}
     type-check:
       glob: '*.{ts}'
       run: bun run type-check

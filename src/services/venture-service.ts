@@ -3,7 +3,9 @@ import { scrapeCompany } from '../scrapers/scrape.js';
 import { analyzeCompany } from '../ai/analyzer.js';
 import type { CompanyData, AnalysisResult } from '../types/index.js';
 
-export async function processVenture(url: string): Promise<{ id: number; data: CompanyData & Partial<AnalysisResult> }> {
+export async function processVenture(
+  url: string
+): Promise<{ id: number; data: CompanyData & Partial<AnalysisResult> }> {
   const db = initDatabase();
 
   try {

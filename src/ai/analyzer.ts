@@ -1,8 +1,4 @@
-import {
-  initDatabase,
-  getAllCompanies,
-  updateCompany,
-} from '../db/database.js';
+import { initDatabase, getAllCompanies, updateCompany } from '../db/database.js';
 import type { CompanyData, AnalysisOptions, AnalysisResult } from '../types/index.js';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -16,7 +12,9 @@ export async function analyzeCompany(
   const openRouterKey = process.env.OPENROUTER_API_KEY;
 
   if (!anthropicKey && !openRouterKey) {
-    throw new Error('Either ANTHROPIC_API_KEY or OPENROUTER_API_KEY environment variable is required');
+    throw new Error(
+      'Either ANTHROPIC_API_KEY or OPENROUTER_API_KEY environment variable is required'
+    );
   }
 
   const prompt = `You are a venture capital analyst. Analyze the following company description and generate structured insights.

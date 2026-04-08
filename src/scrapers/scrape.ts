@@ -13,7 +13,8 @@ export async function scrapeCompany(options: ScraperOptions): Promise<CompanyDat
     const page = await browser.newPage();
     // Use a desktop user-agent to avoid mobile versions
     await page.setExtraHTTPHeaders({
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
     });
 
     await page.goto(url, { waitUntil: 'networkidle', timeout });
@@ -37,7 +38,15 @@ export async function scrapeCompany(options: ScraperOptions): Promise<CompanyDat
 
       // Extract meaningful text content, excluding scripts and styles
       const getMainContent = (): string => {
-        const excludeSelectors = ['script', 'style', 'nav', 'footer', 'header', 'noscript', 'iframe'];
+        const excludeSelectors = [
+          'script',
+          'style',
+          'nav',
+          'footer',
+          'header',
+          'noscript',
+          'iframe',
+        ];
         const bodyClone = document.body.cloneNode(true) as HTMLElement;
 
         excludeSelectors.forEach((selector) => {
@@ -79,7 +88,9 @@ export async function scrapeCompany(options: ScraperOptions): Promise<CompanyDat
       };
     });
 
-    console.log(`Scraped ${companyData.companyName}. Length of content: ${companyData.description.length}`);
+    console.log(
+      `Scraped ${companyData.companyName}. Length of content: ${companyData.description.length}`
+    );
 
     return {
       ...companyData,

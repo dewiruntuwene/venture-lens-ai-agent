@@ -1,6 +1,12 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
-import { initDatabase, getAllCompanies, getCompanyById, insertCompany, updateCompany } from '../db/database.js';
+import {
+  initDatabase,
+  getAllCompanies,
+  getCompanyById,
+  insertCompany,
+  updateCompany,
+} from '../db/database.js';
 import { scrapeCompany } from '../scrapers/scrape.js';
 import { analyzeCompany } from '../ai/analyzer.js';
 import { processVenture } from '../services/venture-service.js';
@@ -35,10 +41,13 @@ app.get('/companies', (c) => {
       data: companies,
     });
   } catch (error) {
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   } finally {
     db.close();
   }
@@ -52,10 +61,13 @@ app.get('/companies/:id', (c) => {
     const company = getCompanyById(db, id);
 
     if (!company) {
-      return c.json({
-        success: false,
-        error: 'Company not found',
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Company not found',
+        },
+        404
+      );
     }
 
     return c.json({
@@ -63,10 +75,13 @@ app.get('/companies/:id', (c) => {
       data: company,
     });
   } catch (error) {
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   } finally {
     db.close();
   }
@@ -79,24 +94,33 @@ app.post('/process', async (c) => {
     const { url } = body;
 
     if (!url) {
-      return c.json({
-        success: false,
-        error: 'URL is required',
-      }, 400);
+      return c.json(
+        {
+          success: false,
+          error: 'URL is required',
+        },
+        400
+      );
     }
 
     const result = await processVenture(url);
 
-    return c.json({
-      success: true,
-      message: 'Company processed successfully',
-      data: result.data,
-    }, 201);
+    return c.json(
+      {
+        success: true,
+        message: 'Company processed successfully',
+        data: result.data,
+      },
+      201
+    );
   } catch (error) {
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -108,25 +132,34 @@ app.post('/companies/scrape', async (c) => {
     const { url } = body;
 
     if (!url) {
-      return c.json({
-        success: false,
-        error: 'URL is required',
-      }, 400);
+      return c.json(
+        {
+          success: false,
+          error: 'URL is required',
+        },
+        400
+      );
     }
 
     const companyData = await scrapeCompany({ url });
     const id = insertCompany(db, companyData);
 
-    return c.json({
-      success: true,
-      message: 'Company scraped successfully',
-      data: { id, ...companyData },
-    }, 201);
+    return c.json(
+      {
+        success: true,
+        message: 'Company scraped successfully',
+        data: { id, ...companyData },
+      },
+      201
+    );
   } catch (error) {
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   } finally {
     db.close();
   }
@@ -140,10 +173,13 @@ app.post('/companies/:id/analyze', async (c) => {
     const company = getCompanyById(db, id);
 
     if (!company) {
-      return c.json({
-        success: false,
-        error: 'Company not found',
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Company not found',
+        },
+        404
+      );
     }
 
     const result = await analyzeCompany(company);
@@ -161,10 +197,13 @@ app.post('/companies/:id/analyze', async (c) => {
       data: { id, ...result },
     });
   } catch (error) {
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   } finally {
     db.close();
   }
@@ -173,9 +212,12 @@ app.post('/companies/:id/analyze', async (c) => {
 // Start server
 const port = parseInt(process.env.PORT || '3000');
 
-serve({
-  fetch: app.fetch,
-  port,
-}, (info) => {
-  console.log(`✓ Venture Lens AI Agent API running at http://localhost:${info.port}`);
-});
+serve(
+  {
+    fetch: app.fetch,
+    port,
+  },
+  (info) => {
+    console.log(`✓ Venture Lens AI Agent API running at http://localhost:${info.port}`);
+  }
+);
