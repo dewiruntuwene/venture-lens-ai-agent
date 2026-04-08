@@ -3,6 +3,7 @@ import { scrapeCompany } from '../scrapers/scrape.js';
 import { analyzeCompany } from '../ai/analyzer.js';
 import type { CompanyData, AnalysisResult } from '../types/index.js';
 import { serviceLogger } from '../utils/logger.js';
+import { cleanDescription } from '../utils/data-cleaner.js';
 
 export async function processVenture(
   url: string
@@ -13,6 +14,10 @@ export async function processVenture(
     // 1. Scrape
     serviceLogger.info({ url }, 'Step 1/4: Starting scrape');
     const scrapedData = await scrapeCompany({ url });
+
+    // Clean description before saving and analysis
+    scrapedData.description = cleanDescription(scrapedData.description);
+    scrapedData.summary = cleanDescription(scrapedData.summary, 500); // Shorter for summary
 
     // 2. Save initial data
     const id = insertCompany(db, scrapedData);

@@ -8,6 +8,7 @@ import {
 import { scrapeProductHunt } from '../scrapers/product-hunt-scraper.js';
 import { scrapeYCombinator } from '../scrapers/ycombinator-scraper.js';
 import { serviceLogger } from '../utils/logger.js';
+import { cleanDescription } from '../utils/data-cleaner.js';
 
 export type DataSource = 'github-trending' | 'github-awesome' | 'product-hunt' | 'ycombinator';
 
@@ -88,14 +89,18 @@ export async function batchScrapeAndAnalyze(
 
     for (const company of scrapedCompanies) {
       try {
+        // Clean description before saving and analysis
+        const cleanedDescription = cleanDescription(company.description);
+        const cleanedSummary = cleanDescription(company.description, 500);
+
         // Prepare company data with defaults
         const companyData = {
           companyName: company.companyName,
-          description: company.description,
+          description: cleanedDescription,
           website: company.website,
           industry: 'Unknown',
           businessModel: 'Unknown',
-          summary: company.description,
+          summary: cleanedSummary,
           useCase: 'Unknown',
           scrapedAt: new Date().toISOString(),
         };

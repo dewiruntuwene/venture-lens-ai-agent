@@ -5,6 +5,7 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { aiLogger } from '../utils/logger.js';
+import { cleanDescription } from '../utils/data-cleaner.js';
 
 // Zod schema for structured output validation
 const analysisSchema = z.object({
@@ -30,17 +31,19 @@ export async function analyzeCompany(
   options: AnalysisOptions = {}
 ): Promise<AnalysisResult> {
   const useOpenRouter = process.env.USE_OPENROUTER === 'true';
+
+  // Clean the input data before analysis
+  const cleanedDescription = cleanDescription(company.description);
+
   // Use meta-llama/llama-3.1-8b-instruct:free - known working free model
-  const defaultModel = useOpenRouter
-    ? 'meta-llama/llama-3.2-3b-instruct:free'
-    : 'claude-3-5-sonnet-20241022';
+  const defaultModel = useOpenRouter ? 'openai/gpt-oss-20b:free' : 'claude-3-5-sonnet-20241022';
   const { model = defaultModel } = options;
 
   const prompt = `Analyze the following company description and generate structured insights.
 
 Company Name: ${company.companyName}
 Company Website: ${company.website}
-Scraped Content: ${company.description}
+Scraped Content: ${cleanedDescription}
 
 Provide a comprehensive venture capital analysis including:
 - Industry classification

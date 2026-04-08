@@ -26,6 +26,13 @@ export function initDatabase(): Database {
     )
   `);
 
+  // Migration: Add analysis column if it doesn't exist
+  try {
+    db.run('ALTER TABLE companies ADD COLUMN analysis TEXT');
+  } catch (error) {
+    // Column already exists, ignore error
+  }
+
   return db;
 }
 
