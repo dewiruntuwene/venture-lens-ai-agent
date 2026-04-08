@@ -101,3 +101,83 @@ All successful responses follow this format:
 - **Try different industries**: Common values include FinTech, HealthTech, AI/ML, Developer Tools, SaaS, E-commerce
 - **Search is flexible**: Partial matches work (searching "block" will find "blockchain")
 - **Case sensitivity**: Industry filter is case-sensitive, search is case-insensitive
+
+## Available AI Models
+
+### OpenRouter Free Models (Recommended)
+
+OpenRouter provides free access to several models using the `:free` suffix. The following models are confirmed to work:
+
+1. **Meta Llama 3.1 8B Instruct** (Default - RECOMMENDED)
+   - Model ID: `meta-llama/llama-3.1-8b-instruct:free`
+   - ✅ Confirmed working
+   - Fast, efficient, good quality
+   - Best for structured output generation
+   - 128K context window
+
+2. **Meta Llama 3.2 3B Instruct**
+   - Model ID: `meta-llama/llama-3.2-3b-instruct:free`
+   - Lightweight and fast
+   - Good for simple analysis
+   - 128K context window
+
+3. **Mistral 7B Instruct**
+   - Model ID: `mistralai/mistral-7b-instruct:free`
+   - Balanced performance
+   - Good general-purpose model
+   - 32K context window
+
+4. **Google Gemma 2 9B**
+   - Model ID: `google/gemma-2-9b-it:free`
+   - High quality outputs
+   - Good for detailed analysis
+   - 8K context window
+
+**Important:** Always use the `:free` suffix to access free models on OpenRouter.
+
+### How to Change Models
+
+Edit `src/ai/analyzer.ts` and update the `defaultModel` value:
+
+```typescript
+const defaultModel = useOpenRouter
+  ? 'meta-llama/llama-3.1-8b-instruct:free' // Change this
+  : 'claude-3-5-sonnet-20241022';
+```
+
+For the latest list of free models, visit: https://openrouter.ai/models?max_price=0
+
+### OpenRouter Free Models (Recommended)
+
+The following models are available for free on OpenRouter:
+
+1. **Qwen 2.5 72B Instruct** (Default)
+   - Model ID: `qwen/qwen-2.5-72b-instruct`
+   - High quality, fast responses
+   - Good for structured data generation
+
+2. **DeepSeek Chat**
+   - Model ID: `deepseek/deepseek-chat`
+   - Efficient and accurate
+   - Good for general analysis
+
+3. **Meta Llama 3.1 8B**
+   - Model ID: `meta-llama/llama-3.1-8b-instruct`
+   - Fast, lightweight
+   - Good for quick analysis
+
+4. **Google Gemini Flash 1.5**
+   - Model ID: `google/gemini-flash-1.5`
+   - Fast and efficient
+   - Good multimodal capabilities
+
+To use a different model, you can specify it in the batch scrape command or modify the default in `src/ai/analyzer.ts`.
+
+### How to Change Models
+
+The default model is set in the analyzer. To use a different model, you can:
+
+1. Edit `src/ai/analyzer.ts` and change the `defaultModel` value
+2. Or use environment variables (feature can be added if needed)
+
+For a complete list of available models, visit: https://openrouter.ai/models

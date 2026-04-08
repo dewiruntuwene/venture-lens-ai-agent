@@ -29,7 +29,8 @@ An AI-powered venture capital analysis platform that collects company informatio
 - **SQLite (via Bun:sqlite)**: Efficient embedded database
 - **Playwright**: Reliable web scraping
 - **Vercel AI SDK**: Unified AI interface
-- **Anthropic Claude**: Advanced AI analysis (Claude 3.5 Sonnet)
+- **OpenRouter**: Access to multiple AI models (free tier available)
+- **Anthropic Claude**: Alternative AI provider (Claude 3.5 Sonnet)
 - **Zod**: Runtime type validation
 - **Pino**: High-performance structured logging
 
@@ -38,7 +39,9 @@ An AI-powered venture capital analysis platform that collects company informatio
 ### Prerequisites
 
 - Bun runtime installed
-- Anthropic API key (with sufficient credits for AI analysis)
+- **OpenRouter API key (recommended - free tier available)** OR Anthropic API key
+  - Get free OpenRouter API key at: https://openrouter.ai/keys
+  - Free models available: Qwen, DeepSeek, Meta-Llama
 
 ### Installation
 
@@ -70,11 +73,29 @@ bun run prepare
 
 ```bash
 cp .env.example .env
-# Edit .env and configure:
-# - ANTHROPIC_API_KEY: Your Anthropic API key
-# - NODE_ENV: development or production
-# - LOG_LEVEL: debug, info, warn, error (default: info)
 ```
+
+**Option A: Using OpenRouter (Recommended - Free tier available)**
+
+```bash
+# Edit .env:
+USE_OPENROUTER=true
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+```
+
+**Option B: Using Anthropic Claude**
+
+```bash
+# Edit .env:
+USE_OPENROUTER=false
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+```
+
+**Additional settings:**
+
+- `NODE_ENV`: development or production
+- `LOG_LEVEL`: debug, info, warn, error (default: info)
+- `PORT`: API server port (default: 3000)
 
 ## Usage
 

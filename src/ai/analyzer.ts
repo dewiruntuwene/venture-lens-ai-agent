@@ -2,6 +2,7 @@ import { initDatabase, getAllCompanies, updateCompany } from '../db/database.js'
 import type { CompanyData, AnalysisOptions, AnalysisResult } from '../types/index.js';
 import { generateObject } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
+import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { aiLogger } from '../utils/logger.js';
 
@@ -28,14 +29,12 @@ export async function analyzeCompany(
   company: CompanyData,
   options: AnalysisOptions = {}
 ): Promise<AnalysisResult> {
-  const { model = 'claude-3-5-sonnet-20241022' } = options;
-
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-
-  if (!anthropicKey) {
-    aiLogger.error('ANTHROPIC_API_KEY environment variable not set');
-    throw new Error('ANTHROPIC_API_KEY environment variable is required');
-  }
+  const useOpenRouter = process.env.USE_OPENROUTER === 'true';
+  // Use meta-llama/llama-3.1-8b-instruct:free - known working free model
+  const defaultModel = useOpenRouter
+    ? 'meta-llama/llama-3.2-3b-instruct:free'
+    : 'claude-3-5-sonnet-20241022';
+  const { model = defaultModel } = options;
 
   const prompt = `Analyze the following company description and generate structured insights.
 
@@ -51,14 +50,50 @@ Provide a comprehensive venture capital analysis including:
 - Detailed analysis covering market potential, competitive landscape, investment viability, risk factors, and key strengths/weaknesses`;
 
   aiLogger.info(
-    { companyName: company.companyName, model },
+    {
+      companyName: company.companyName,
+      model,
+      provider: useOpenRouter ? 'openrouter' : 'anthropic',
+    },
     `Starting AI analysis for ${company.companyName}`
   );
 
   try {
+    let aiModel;
+
+    if (useOpenRouter) {
+      const openRouterKey = process.env.OPENROUTER_API_KEY;
+      if (!openRouterKey) {
+        aiLogger.error('OPENROUTER_API_KEY environment variable not set');
+        throw new Error(
+          'OPENROUTER_API_KEY environment variable is required when USE_OPENROUTER=true'
+        );
+      }
+
+      const openrouter = createOpenAI({
+        apiKey: openRouterKey,
+        baseURL: 'https://openrouter.ai/api/v1',
+      });
+
+      aiModel = openrouter(model);
+      aiLogger.debug({ model }, 'Using OpenRouter with model');
+    } else {
+      const anthropicKey = process.env.ANTHROPIC_API_KEY;
+      if (!anthropicKey) {
+        aiLogger.error('ANTHROPIC_API_KEY environment variable not set');
+        throw new Error(
+          'ANTHROPIC_API_KEY environment variable is required when USE_OPENROUTER=false'
+        );
+      }
+
+      aiModel = anthropic(model);
+      aiLogger.debug({ model }, 'Using Anthropic with model');
+    }
+
     const { object } = await generateObject({
-      model: anthropic(model),
+      model: aiModel,
       schema: analysisSchema,
+      maxRetries: 5,
       prompt,
       system: 'You are a venture capital analyst providing structured company analysis.',
     });

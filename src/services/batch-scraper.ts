@@ -111,6 +111,13 @@ export async function batchScrapeAndAnalyze(
         // Analyze if requested
         if (analyze) {
           try {
+            // Add a small delay between analyses to avoid rate limits, especially for free models
+            if (result.totalScraped > 1) {
+              const delay = process.env.USE_OPENROUTER === 'true' ? 5000 : 1000;
+              serviceLogger.debug({ delay }, `Waiting ${delay}ms before next analysis...`);
+              await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+
             serviceLogger.info(
               { companyName: company.companyName },
               `Analyzing company ${company.companyName}...`
