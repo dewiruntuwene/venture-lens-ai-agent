@@ -1,0 +1,21 @@
+meta {
+  name: "Filter AI/ML Companies"
+  type: "http"
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/companies?industry=AI/ML
+  body: none
+  auth: none
+}
+
+params:query {
+  industry: AI/ML
+}
+
+docs {
+  Quick filter to get all AI/ML companies.
+
+  This is a specific example of industry filtering.
+}

@@ -1,0 +1,29 @@
+meta {
+  name: "Filter by Industry"
+  type: "http"
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/companies?industry=FinTech
+  body: none
+  auth: none
+}
+
+params:query {
+  industry: FinTech
+}
+
+docs {
+  Filter companies by industry classification.
+
+  Examples:
+  - FinTech
+  - HealthTech
+  - AI/ML
+  - Developer Tools
+  - SaaS
+  - E-commerce
+
+  Change the 'industry' query parameter to filter by different industries.
+}

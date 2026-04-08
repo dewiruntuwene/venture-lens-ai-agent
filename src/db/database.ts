@@ -26,6 +26,13 @@ export function initDatabase(): Database {
     )
   `);
 
+  // Migration: Add scraped_at column if it doesn't exist
+  try {
+    db.run('ALTER TABLE companies ADD COLUMN scraped_at TEXT');
+  } catch (error) {
+    // Column already exists, ignore error
+  }
+
   return db;
 }
 

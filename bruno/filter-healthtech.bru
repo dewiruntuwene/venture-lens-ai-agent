@@ -1,0 +1,21 @@
+meta {
+  name: "Filter HealthTech Companies"
+  type: "http"
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/companies?industry=HealthTech
+  body: none
+  auth: none
+}
+
+params:query {
+  industry: HealthTech
+}
+
+docs {
+  Quick filter to get all HealthTech companies.
+
+  This is a specific example of industry filtering.
+}

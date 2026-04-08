@@ -38,7 +38,7 @@ An AI-powered venture capital analysis platform that collects company informatio
 ### Prerequisites
 
 - Bun runtime installed
-- Anthropic API key
+- Anthropic API key (with sufficient credits for AI analysis)
 
 ### Installation
 
@@ -52,6 +52,12 @@ bun install
 
 ```bash
 bunx playwright install chromium
+```
+
+**Important:** This step is required for web scraping to work. If you skip this, you'll get an error like:
+
+```
+Executable doesn't exist at .../chrome-headless-shell
 ```
 
 3. Set up git hooks (Lefthook):
@@ -142,43 +148,66 @@ bun run analyze
 
 ## API Endpoints
 
-### Company Management
+The API provides two simple endpoints for querying company data:
 
-- `GET /` - API information and endpoint list
-- `GET /companies` - List all companies
-- `GET /companies?industry=FinTech` - Filter companies by industry
-- `GET /companies?search=keyword` - Search companies by keyword
-- `GET /companies/:id` - Get company by ID
-- `POST /process` - Complete workflow: Scrape + Analyze
-  ```json
-  { "url": "https://example.com" }
-  ```
-- `POST /companies/scrape` - Scrape only (no analysis)
-  ```json
-  { "url": "https://example.com" }
-  ```
-- `POST /companies/:id/analyze` - Analyze a specific company
+### GET /companies
+
+Retrieve all companies or filter/search using query parameters.
+
+**Query Parameters:**
+
+- `industry` - Filter companies by industry (e.g., `FinTech`, `HealthTech`, `AI/ML`)
+- `search` - Search companies by keyword (searches across name, description, summary, use case)
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "count": 10,
+  "data": [
+    {
+      "id": 1,
+      "companyName": "Example Co",
+      "description": "...",
+      "website": "https://example.com",
+      "industry": "FinTech",
+      "businessModel": "B2B SaaS",
+      "summary": "One-sentence description",
+      "useCase": "Relevant use cases",
+      "scrapedAt": "2025-04-08T10:00:00Z",
+      "analysis": "Detailed analysis..."
+    }
+  ],
+  "filters": {
+    "industry": "FinTech",
+    "search": null
+  }
+}
+```
 
 ### Example Requests
+
+**Get all companies:**
+
+```bash
+curl http://localhost:3000/companies
+```
 
 **Filter by industry:**
 
 ```bash
 curl http://localhost:3000/companies?industry=FinTech
+curl http://localhost:3000/companies?industry=AI/ML
+curl http://localhost:3000/companies?industry=HealthTech
 ```
 
 **Search by keyword:**
 
 ```bash
 curl http://localhost:3000/companies?search=blockchain
-```
-
-**Complete workflow (scrape + analyze):**
-
-```bash
-curl -X POST http://localhost:3000/process \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com"}'
+curl http://localhost:3000/companies?search=chatbot
+curl http://localhost:3000/companies?search=payment
 ```
 
 ## Project Structure
@@ -304,7 +333,13 @@ Companies:
 ...
 ```
 
-**Step 2: Query via API**
+**Step 2: Start the API server**
+
+```bash
+bun run dev
+```
+
+**Step 3: Query via API**
 
 ```bash
 # Get all companies
@@ -315,13 +350,60 @@ curl http://localhost:3000/companies?industry=AI/ML
 
 # Search by keyword
 curl http://localhost:3000/companies?search=chatbot
-
-# Get specific company
-curl http://localhost:3000/companies/1
 ```
 
-**Step 3: Analyze existing companies that weren't analyzed**
+**Step 4: (Optional) Analyze companies that failed initial analysis**
 
 ```bash
 bun run analyze
 ```
+
+## Troubleshooting
+
+### Error: Playwright browsers not installed
+
+**Symptom:**
+
+```
+Executable doesn't exist at .../chrome-headless-shell
+```
+
+**Solution:**
+
+```bash
+bunx playwright install chromium
+```
+
+### Error: Credit balance too low
+
+**Symptom:**
+
+```
+Your credit balance is too low to access the Anthropic API
+```
+
+**Solution:**
+
+- Go to your Anthropic dashboard and add credits
+- **Alternative:** Use `--no-analyze` flag to scrape without AI analysis:
+
+```bash
+bun run batch-scrape --no-analyze --limit 10
+```
+
+Then analyze later when you have credits:
+
+```bash
+bun run analyze
+```
+
+### Error: Database column missing
+
+**Symptom:**
+
+```
+table companies has no column named scraped_at
+```
+
+**Solution:**
+The database migration runs automatically on next execution. Just run the command again.

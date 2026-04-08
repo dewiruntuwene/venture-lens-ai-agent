@@ -1,0 +1,29 @@
+meta {
+  name: "Search by Keyword"
+  type: "http"
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/companies?search=blockchain
+  body: none
+  auth: none
+}
+
+params:query {
+  search: blockchain
+}
+
+docs {
+  Search companies by keyword across all fields (name, description, summary, use case, industry, business model).
+
+  Examples:
+  - blockchain
+  - payment
+  - chatbot
+  - ai
+  - health
+  - finance
+
+  Change the 'search' query parameter to search for different keywords.
+}
