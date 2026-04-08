@@ -68,6 +68,55 @@ export function getAllCompanies(db: Database): CompanyData[] {
   return stmt.all() as CompanyData[];
 }
 
+export function getCompaniesByIndustry(db: Database, industry: string): CompanyData[] {
+  const stmt = db.prepare(`
+    SELECT
+      id,
+      company_name as companyName,
+      description,
+      website,
+      industry,
+      business_model as businessModel,
+      summary,
+      use_case as useCase,
+      scraped_at as scrapedAt,
+      analysis
+    FROM companies
+    WHERE industry = $industry
+    ORDER BY created_at DESC
+  `);
+
+  return stmt.all(industry) as CompanyData[];
+}
+
+export function searchCompanies(db: Database, keyword: string): CompanyData[] {
+  const searchTerm = `%${keyword}%`;
+  const stmt = db.prepare(`
+    SELECT
+      id,
+      company_name as companyName,
+      description,
+      website,
+      industry,
+      business_model as businessModel,
+      summary,
+      use_case as useCase,
+      scraped_at as scrapedAt,
+      analysis
+    FROM companies
+    WHERE
+      company_name LIKE $searchTerm OR
+      description LIKE $searchTerm OR
+      summary LIKE $searchTerm OR
+      use_case LIKE $searchTerm OR
+      industry LIKE $searchTerm OR
+      business_model LIKE $searchTerm
+    ORDER BY created_at DESC
+  `);
+
+  return stmt.all(searchTerm) as CompanyData[];
+}
+
 export function getCompanyById(db: Database, id: number): CompanyData | undefined {
   const stmt = db.prepare(`
     SELECT

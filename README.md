@@ -1,34 +1,44 @@
 # Venture Lens AI Agent
 
-An AI-powered venture capital analysis platform that scrapes venture information and provides intelligent, structured insights using OpenRouter and the Qwen model.
+An AI-powered venture capital analysis platform that collects company information through web scraping, analyzes data using AI agents, generates structured insights, and provides results through a comprehensive REST API.
 
 ## Features
 
-- **Web Scraping**: Extract venture information from websites using Playwright.
-- **AI Analysis**: Generate structured insights using OpenRouter (`qwen/qwen3-next-80b-a3b-instruct:free`):
-  - **Industry Classification**: Automated tagging (e.g., FinTech, HealthTech, Developer Tools).
-  - **Business Model**: Analysis of revenue approach (e.g., B2B, B2C, SaaS, Marketplace).
-  - **One-Sentence Summary**: Concise value proposition.
-  - **Potential Use Cases**: Specific applications of the technology/service.
-  - **Comprehensive VC Analysis**: Markdown report on market potential, risks, and viability.
-- **SQLite Database**: Store and manage venture data efficiently.
-- **REST API**: Hono-based API for interacting with the system.
+- **Intelligent Web Scraping**: Extract company information from websites using Playwright
+- **Multi-Agent AI Analysis**: Powered by Anthropic Claude via Vercel AI SDK
+  - **Basic Analysis**: Industry classification, business model, summary, and use cases
+  - **Deep Insights**: Multi-agent parallel analysis providing:
+    - Competitive landscape analysis
+    - Financial viability assessment
+    - Market size and growth analysis
+    - Comprehensive risk assessment
+    - Investment recommendations with confidence scores
+- **Structured Data Generation**: AI-validated outputs using Zod schemas
+- **Advanced Search & Filtering**:
+  - Filter by industry
+  - Keyword search across all company data
+- **SQLite Database**: Efficient local data storage and management
+- **REST API**: Fast Hono-based API with comprehensive endpoints
+- **Structured Logging**: Pino-based logging with contextual information across all modules
 
 ## Tech Stack
 
-- **Bun**: Fast all-in-one JavaScript runtime.
-- **TypeScript**: Type-safe development.
-- **Hono**: Fast web framework.
-- **SQLite (via Bun:sqlite)**: Efficient SQLite database.
-- **Playwright**: Reliable web scraping.
-- **OpenRouter**: Access to top LLMs including Qwen.
+- **Bun**: Fast all-in-one JavaScript runtime
+- **TypeScript**: Type-safe development
+- **Hono**: Fast, lightweight web framework
+- **SQLite (via Bun:sqlite)**: Efficient embedded database
+- **Playwright**: Reliable web scraping
+- **Vercel AI SDK**: Unified AI interface
+- **Anthropic Claude**: Advanced AI analysis (Claude 3.5 Sonnet)
+- **Zod**: Runtime type validation
+- **Pino**: High-performance structured logging
 
 ## Getting Started
 
 ### Prerequisites
 
-- Bun runtime installed.
-- OpenRouter API key.
+- Bun runtime installed
+- Anthropic API key
 
 ### Installation
 
@@ -54,10 +64,57 @@ bun run prepare
 
 ```bash
 cp .env.example .env
-# Edit .env and add your OPENROUTER_API_KEY
+# Edit .env and configure:
+# - ANTHROPIC_API_KEY: Your Anthropic API key
+# - NODE_ENV: development or production
+# - LOG_LEVEL: debug, info, warn, error (default: info)
 ```
 
 ## Usage
+
+### Batch Scrape and Analyze (Quick Start)
+
+Automatically scrape 10 companies from GitHub and analyze them with AI:
+
+```bash
+bun run batch-scrape
+```
+
+This will:
+
+1. Scrape 10 companies from GitHub trending repositories
+2. Extract company name, description, and website
+3. Save to database
+4. Analyze each company with AI to determine:
+   - Industry classification (FinTech, HealthTech, etc.)
+   - Business model (B2B, B2C, SaaS, etc.)
+   - One-sentence summary
+   - Potential use cases
+
+**Additional Options:**
+
+```bash
+# Scrape from different sources
+bun run batch-scrape --source github-trending --limit 10
+bun run batch-scrape --source product-hunt --limit 5
+bun run batch-scrape --source ycombinator --limit 10
+
+# Skip AI analysis (scrape only)
+bun run batch-scrape --no-analyze
+
+# Scrape from all sources
+bun run batch-scrape --all
+
+# Get help
+bun run batch-scrape --help
+```
+
+**Available Data Sources:**
+
+- `github-trending` - Trending GitHub repositories
+- `github-awesome` - GitHub awesome lists
+- `product-hunt` - Product Hunt products
+- `ycombinator` - Y Combinator companies
 
 ### Start the API Server
 
@@ -67,40 +124,204 @@ bun run dev
 
 The server will start at `http://localhost:3000`
 
-### Scrape a Venture
+### Manual Scraping
+
+Scrape a single company URL:
 
 ```bash
 bun run scrape <url>
 ```
 
-### Analyze Ventures
+### Analyze Existing Companies
+
+Analyze all companies in the database that haven't been analyzed:
 
 ```bash
 bun run analyze
 ```
 
-This will analyze all ventures in the database that haven't been analyzed yet or have "Unknown" industry tags.
-
 ## API Endpoints
 
-- `GET /` - API information
+### Company Management
+
+- `GET /` - API information and endpoint list
 - `GET /companies` - List all companies
+- `GET /companies?industry=FinTech` - Filter companies by industry
+- `GET /companies?search=keyword` - Search companies by keyword
 - `GET /companies/:id` - Get company by ID
-- `POST /companies/scrape` - Scrape a new company
+- `POST /process` - Complete workflow: Scrape + Analyze
   ```json
-  {
-    "url": "https://example.com"
-  }
+  { "url": "https://example.com" }
+  ```
+- `POST /companies/scrape` - Scrape only (no analysis)
+  ```json
+  { "url": "https://example.com" }
   ```
 - `POST /companies/:id/analyze` - Analyze a specific company
+
+### Example Requests
+
+**Filter by industry:**
+
+```bash
+curl http://localhost:3000/companies?industry=FinTech
+```
+
+**Search by keyword:**
+
+```bash
+curl http://localhost:3000/companies?search=blockchain
+```
+
+**Complete workflow (scrape + analyze):**
+
+```bash
+curl -X POST http://localhost:3000/process \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
+```
 
 ## Project Structure
 
 ```
 src/
-├── api/          # API route handlers (Hono)
-├── db/           # Database models and queries (Bun:sqlite)
-├── scraper/      # Web scrapers (Playwright)
-├── agents/       # AI analysis agents (OpenRouter API)
-└── data/         # SQLite database storage
+├── api/           # Hono API route handlers
+├── ai/            # AI agents and analyzers (Anthropic Claude via Vercel AI SDK)
+│   ├── analyzer.ts       # Basic company analysis
+│   └── insight-agent.ts  # Multi-agent deep insights
+├── cli/           # Command-line interface tools
+│   └── batch-scrape.ts   # Batch scraping CLI
+├── db/            # SQLite database layer (Bun:sqlite)
+├── scrapers/      # Playwright web scrapers
+│   ├── scrape.ts             # Generic website scraper
+│   ├── github-scraper.ts     # GitHub trending/awesome lists
+│   ├── product-hunt-scraper.ts # Product Hunt products
+│   └── ycombinator-scraper.ts  # Y Combinator companies
+├── services/      # Business logic services
+│   ├── venture-service.ts   # Complete processing pipeline
+│   ├── insights-service.ts  # Advanced insights & aggregation
+│   └── batch-scraper.ts     # Batch scraping orchestrator
+├── types/         # TypeScript type definitions
+├── utils/         # Utility functions
+│   └── logger.ts         # Pino structured logging
+└── data/          # SQLite database storage
+```
+
+## Architecture
+
+The platform uses a multi-agent AI architecture with automated data collection:
+
+### Data Collection Pipeline
+
+1. **Batch Scraping**: Automated scrapers collect company data from multiple sources:
+   - GitHub trending repositories
+   - Product Hunt products
+   - Y Combinator companies
+   - Awesome lists
+
+2. **Data Extraction**: Three core fields extracted:
+   - Company name
+   - Description
+   - Website URL
+
+3. **AI Analysis**: Automated analysis generates:
+   - Industry classification (FinTech, HealthTech, Developer Tools, etc.)
+   - Business model (B2B, B2C, SaaS, Marketplace, etc.)
+   - One-sentence summary
+   - Potential use cases
+
+### Advanced Analysis (Optional)
+
+4. **Deep Insights**: Five specialized AI agents run in parallel:
+   - Competitive Intelligence Agent
+   - Financial Analysis Agent
+   - Market Research Agent
+   - Risk Assessment Agent
+   - Investment Decision Agent
+
+5. **Synthesis**: Executive summary agent combines all insights
+
+6. **API Access**: RESTful endpoints provide structured data with filtering and search
+
+## Logging
+
+The application uses Pino for structured, high-performance logging with module-specific contexts:
+
+- **API Logger**: HTTP requests, responses, and endpoint operations
+- **AI Logger**: AI model interactions, analysis results, and performance metrics
+- **Scraper Logger**: Web scraping operations and data extraction
+- **Service Logger**: Business logic workflows and pipeline steps
+- **DB Logger**: Database operations (available for future use)
+
+**Log Levels**: `debug`, `info`, `warn`, `error`
+
+In development mode, logs are prettified with colors and timestamps. In production, logs are output as JSON for easy parsing and monitoring.
+
+**Example log output:**
+
+```
+[INFO] (api): GET /companies?industry=FinTech 200 - 45ms
+[INFO] (scraper): Successfully scraped Stripe
+[INFO] (ai): Starting AI analysis for Stripe
+[INFO] (ai): Analysis completed for Stripe - industry: FinTech, businessModel: B2B SaaS
+```
+
+## Complete Workflow Example
+
+Here's a complete example of scraping and analyzing companies:
+
+**Step 1: Batch scrape companies from GitHub**
+
+```bash
+bun run batch-scrape --source github-trending --limit 10
+```
+
+Expected output:
+
+```
+============================================================
+BATCH SCRAPING SUMMARY
+============================================================
+Source: github-trending
+Total Scraped: 10
+Total Analyzed: 10
+Errors: 0
+
+Companies:
+
+1. langchain (ID: 1)
+   Industry: AI/ML
+   Business Model: Open Source
+   Summary: Framework for developing applications powered by language models
+   Use Case: Building AI chatbots, document Q&A systems, and LLM-powered applications
+
+2. openai-cookbook (ID: 2)
+   Industry: Developer Tools
+   Business Model: Open Source
+   Summary: Examples and guides for using OpenAI API
+   Use Case: Learning OpenAI API integration, building AI applications
+
+...
+```
+
+**Step 2: Query via API**
+
+```bash
+# Get all companies
+curl http://localhost:3000/companies
+
+# Filter by industry
+curl http://localhost:3000/companies?industry=AI/ML
+
+# Search by keyword
+curl http://localhost:3000/companies?search=chatbot
+
+# Get specific company
+curl http://localhost:3000/companies/1
+```
+
+**Step 3: Analyze existing companies that weren't analyzed**
+
+```bash
+bun run analyze
 ```

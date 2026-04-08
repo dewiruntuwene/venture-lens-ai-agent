@@ -2,6 +2,7 @@ import { initDatabase, insertCompany, updateCompany, getCompanyById } from '../d
 import { scrapeCompany } from '../scrapers/scrape.js';
 import { analyzeCompany } from '../ai/analyzer.js';
 import type { CompanyData, AnalysisResult } from '../types/index.js';
+import { serviceLogger } from '../utils/logger.js';
 
 export async function processVenture(
   url: string
@@ -10,15 +11,15 @@ export async function processVenture(
 
   try {
     // 1. Scrape
-    console.log(`Step 1: Scraping ${url}...`);
+    serviceLogger.info({ url }, 'Step 1/4: Starting scrape');
     const scrapedData = await scrapeCompany({ url });
 
     // 2. Save initial data
     const id = insertCompany(db, scrapedData);
-    console.log(`Step 2: Saved company with ID ${id}`);
+    serviceLogger.info({ id, companyName: scrapedData.companyName }, 'Step 2/4: Saved to database');
 
     // 3. Analyze
-    console.log(`Step 3: Analyzing ${scrapedData.companyName}...`);
+    serviceLogger.info({ companyName: scrapedData.companyName }, 'Step 3/4: Starting AI analysis');
     const analysisResult = await analyzeCompany(scrapedData);
 
     // 4. Update with analysis
@@ -29,7 +30,15 @@ export async function processVenture(
       useCase: analysisResult.useCase,
       analysis: analysisResult.analysis,
     });
-    console.log(`Step 4: Updated analysis for ${scrapedData.companyName}`);
+    serviceLogger.info(
+      {
+        id,
+        companyName: scrapedData.companyName,
+        industry: analysisResult.industry,
+        businessModel: analysisResult.businessModel,
+      },
+      'Step 4/4: Processing complete'
+    );
 
     const finalData = getCompanyById(db, id);
 
@@ -38,7 +47,7 @@ export async function processVenture(
       data: finalData as CompanyData,
     };
   } catch (error) {
-    console.error('Error in venture processing pipeline:', error);
+    serviceLogger.error({ error, url }, 'Venture processing pipeline failed');
     throw error;
   } finally {
     db.close();

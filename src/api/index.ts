@@ -6,22 +6,48 @@ import {
   getCompanyById,
   insertCompany,
   updateCompany,
+  getCompaniesByIndustry,
+  searchCompanies,
 } from '../db/database.js';
 import { scrapeCompany } from '../scrapers/scrape.js';
 import { analyzeCompany } from '../ai/analyzer.js';
 import { processVenture } from '../services/venture-service.js';
+import { apiLogger } from '../utils/logger.js';
 
 const app = new Hono();
+
+// Custom Pino logger middleware
+app.use('*', async (c, next) => {
+  const start = Date.now();
+  const { method, url } = c.req;
+
+  await next();
+
+  const duration = Date.now() - start;
+  const { status } = c.res;
+
+  apiLogger.info(
+    {
+      method,
+      url,
+      status,
+      duration: `${duration}ms`,
+    },
+    `${method} ${url} ${status} - ${duration}ms`
+  );
+});
 
 // Health check endpoint
 app.get('/', (c) => {
   return c.json({
     status: 'ok',
     message: 'Venture Lens AI Agent API',
-    version: '1.1.0',
+    version: '2.0.0',
     endpoints: {
       'GET /': 'This message',
       'GET /companies': 'List all companies',
+      'GET /companies?industry=FinTech': 'Filter companies by industry',
+      'GET /companies?search=keyword': 'Search companies by keyword',
       'GET /companies/:id': 'Get company by ID',
       'POST /process': 'Complete flow: Scrape + Analyze (requires { url })',
       'POST /companies/scrape': 'Scrape only (requires { url })',
@@ -30,17 +56,38 @@ app.get('/', (c) => {
   });
 });
 
-// Get all companies
+// Get all companies with optional filtering
 app.get('/companies', (c) => {
   const db = initDatabase();
   try {
-    const companies = getAllCompanies(db);
+    const industry = c.req.query('industry');
+    const search = c.req.query('search');
+
+    let companies;
+
+    if (industry) {
+      apiLogger.debug({ industry }, 'Filtering companies by industry');
+      companies = getCompaniesByIndustry(db, industry);
+    } else if (search) {
+      apiLogger.debug({ search }, 'Searching companies by keyword');
+      companies = searchCompanies(db, search);
+    } else {
+      companies = getAllCompanies(db);
+    }
+
+    apiLogger.info({ count: companies.length, industry, search }, 'Retrieved companies');
+
     return c.json({
       success: true,
       count: companies.length,
       data: companies,
+      filters: {
+        industry: industry || null,
+        search: search || null,
+      },
     });
   } catch (error) {
+    apiLogger.error({ error }, 'Failed to retrieve companies');
     return c.json(
       {
         success: false,
@@ -94,6 +141,7 @@ app.post('/process', async (c) => {
     const { url } = body;
 
     if (!url) {
+      apiLogger.warn('Process request missing URL');
       return c.json(
         {
           success: false,
@@ -103,7 +151,12 @@ app.post('/process', async (c) => {
       );
     }
 
+    apiLogger.info({ url }, 'Starting company processing workflow');
     const result = await processVenture(url);
+    apiLogger.info(
+      { companyId: result.id, companyName: result.data.companyName },
+      'Company processed successfully'
+    );
 
     return c.json(
       {
@@ -114,6 +167,7 @@ app.post('/process', async (c) => {
       201
     );
   } catch (error) {
+    apiLogger.error({ error }, 'Failed to process company');
     return c.json(
       {
         success: false,
@@ -218,6 +272,13 @@ serve(
     port,
   },
   (info) => {
-    console.log(`✓ Venture Lens AI Agent API running at http://localhost:${info.port}`);
+    apiLogger.info(
+      {
+        port: info.port,
+        version: '2.0.0',
+        env: process.env.NODE_ENV || 'development',
+      },
+      `Venture Lens AI Agent API running at http://localhost:${info.port}`
+    );
   }
 );

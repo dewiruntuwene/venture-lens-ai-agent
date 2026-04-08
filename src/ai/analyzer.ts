@@ -1,93 +1,81 @@
 import { initDatabase, getAllCompanies, updateCompany } from '../db/database.js';
 import type { CompanyData, AnalysisOptions, AnalysisResult } from '../types/index.js';
-import Anthropic from '@anthropic-ai/sdk';
+import { generateObject } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
+import { z } from 'zod';
+import { aiLogger } from '../utils/logger.js';
+
+// Zod schema for structured output validation
+const analysisSchema = z.object({
+  industry: z
+    .string()
+    .describe(
+      'A specific industry classification (e.g., FinTech, HealthTech, Developer Tools, AI/ML, etc.)'
+    ),
+  businessModel: z
+    .string()
+    .describe('The primary business model (e.g., B2B, B2C, SaaS, Marketplace, Enterprise, etc.)'),
+  summary: z.string().describe('A concise, one-sentence summary of what the company does'),
+  useCase: z.string().describe("Relevant potential use cases for the company's product or service"),
+  analysis: z
+    .string()
+    .describe(
+      'A comprehensive venture capital analysis in markdown format, including market potential, competitive landscape, investment viability, risk factors, and key strengths and weaknesses'
+    ),
+});
 
 export async function analyzeCompany(
   company: CompanyData,
   options: AnalysisOptions = {}
 ): Promise<AnalysisResult> {
-  const { model = 'claude-3-5-sonnet-20241022', maxTokens = 2048 } = options;
+  const { model = 'claude-3-5-sonnet-20241022' } = options;
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const openRouterKey = process.env.OPENROUTER_API_KEY;
 
-  if (!anthropicKey && !openRouterKey) {
-    throw new Error(
-      'Either ANTHROPIC_API_KEY or OPENROUTER_API_KEY environment variable is required'
-    );
+  if (!anthropicKey) {
+    aiLogger.error('ANTHROPIC_API_KEY environment variable not set');
+    throw new Error('ANTHROPIC_API_KEY environment variable is required');
   }
 
-  const prompt = `You are a venture capital analyst. Analyze the following company description and generate structured insights.
+  const prompt = `Analyze the following company description and generate structured insights.
 
 Company Name: ${company.companyName}
 Company Website: ${company.website}
 Scraped Content: ${company.description}
 
-You must return a JSON object with the following fields:
-1. "industry": A specific industry classification (e.g., FinTech, HealthTech, Developer Tools, AI/ML, etc.)
-2. "businessModel": The primary business model (e.g., B2B, B2C, SaaS, Marketplace, Enterprise, etc.)
-3. "summary": A concise, one-sentence summary of what the company does.
-4. "useCase": Relevant potential use cases for the company's product or service.
-5. "analysis": A comprehensive venture capital analysis in markdown format, including:
-   - Market potential
-   - Competitive landscape
-   - Investment viability
-   - Risk factors
-   - Key strengths and weaknesses
+Provide a comprehensive venture capital analysis including:
+- Industry classification
+- Business model
+- One-sentence summary
+- Potential use cases
+- Detailed analysis covering market potential, competitive landscape, investment viability, risk factors, and key strengths/weaknesses`;
 
-Ensure the response is valid JSON.`;
+  aiLogger.info(
+    { companyName: company.companyName, model },
+    `Starting AI analysis for ${company.companyName}`
+  );
 
-  console.log(`Analyzing company: ${company.companyName} using ${model}`);
-
-  if (anthropicKey) {
-    const anthropic = new Anthropic({ apiKey: anthropicKey });
-    const msg = await anthropic.messages.create({
-      model,
-      max_tokens: maxTokens,
-      messages: [{ role: 'user', content: prompt }],
-      system: 'You are a venture capital analyst that only outputs valid JSON.',
-    });
-
-    const content = msg.content[0].type === 'text' ? msg.content[0].text : '';
-    return parseLLMResponse(content);
-  } else {
-    // OpenRouter Fallback
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${openRouterKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model === 'claude-3-5-sonnet-20241022' ? 'anthropic/claude-3.5-sonnet' : model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: maxTokens,
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`OpenRouter API error: ${JSON.stringify(errorData)}`);
-    }
-
-    const data = (await response.json()) as {
-      choices: Array<{ message: { content: string } }>;
-    };
-    const content = data.choices[0].message.content;
-    return parseLLMResponse(content);
-  }
-}
-
-function parseLLMResponse(content: string): AnalysisResult {
   try {
-    // Attempt to extract JSON if there is markdown preamble
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    const jsonStr = jsonMatch ? jsonMatch[0] : content;
-    return JSON.parse(jsonStr) as AnalysisResult;
-  } catch (parseError) {
-    console.error('Failed to parse LLM response as JSON:', content);
-    throw new Error('Invalid JSON response from LLM');
+    const { object } = await generateObject({
+      model: anthropic(model),
+      schema: analysisSchema,
+      prompt,
+      system: 'You are a venture capital analyst providing structured company analysis.',
+    });
+
+    aiLogger.info(
+      {
+        companyName: company.companyName,
+        industry: object.industry,
+        businessModel: object.businessModel,
+      },
+      `Analysis completed for ${company.companyName}`
+    );
+
+    return object as AnalysisResult;
+  } catch (error) {
+    aiLogger.error({ error, companyName: company.companyName }, 'Failed to analyze company');
+    throw new Error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -97,7 +85,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const companies = getAllCompanies(db);
 
   if (companies.length === 0) {
-    console.log('No companies found in database. Please scrape some companies first.');
+    aiLogger.info('No companies found in database. Please scrape some companies first.');
     db.close();
     process.exit(0);
   }
@@ -107,12 +95,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   );
 
   if (unanalyzedCompanies.length === 0) {
-    console.log('All companies have been analyzed.');
+    aiLogger.info('All companies have been analyzed.');
     db.close();
     process.exit(0);
   }
 
-  console.log(`Found ${unanalyzedCompanies.length} company(ies) to analyze`);
+  aiLogger.info(
+    { count: unanalyzedCompanies.length },
+    `Found ${unanalyzedCompanies.length} company(ies) to analyze`
+  );
 
   (async () => {
     for (const company of unanalyzedCompanies) {
@@ -125,16 +116,23 @@ if (import.meta.url === `file://${process.argv[1]}`) {
           useCase: result.useCase,
           analysis: result.analysis,
         });
-        console.log(`✓ Analyzed and updated: ${company.companyName}`);
-        console.log(`  Industry: ${result.industry}`);
-        console.log(`  Model: ${result.businessModel}`);
-        console.log('---');
+        aiLogger.info(
+          {
+            companyName: company.companyName,
+            industry: result.industry,
+            businessModel: result.businessModel,
+          },
+          `Analyzed and updated: ${company.companyName}`
+        );
       } catch (error) {
-        console.error(`✗ Failed to analyze ${company.companyName}:`, error);
+        aiLogger.error(
+          { error, companyName: company.companyName },
+          `Failed to analyze ${company.companyName}`
+        );
       }
     }
 
     db.close();
-    console.log('\n✓ Analysis complete');
+    aiLogger.info('Analysis complete');
   })();
 }

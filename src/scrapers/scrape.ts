@@ -1,11 +1,12 @@
 import { chromium } from 'playwright';
 import { initDatabase, insertCompany } from '../db/database.js';
 import type { CompanyData, ScraperOptions } from '../types/index.js';
+import { scraperLogger } from '../utils/logger.js';
 
 export async function scrapeCompany(options: ScraperOptions): Promise<CompanyData> {
   const { url, headless = true, timeout = 30000 } = options;
 
-  console.log(`Scraping company from: ${url}`);
+  scraperLogger.info({ url, headless, timeout }, 'Starting company scrape');
 
   const browser = await chromium.launch({ headless });
 
@@ -88,8 +89,13 @@ export async function scrapeCompany(options: ScraperOptions): Promise<CompanyDat
       };
     });
 
-    console.log(
-      `Scraped ${companyData.companyName}. Length of content: ${companyData.description.length}`
+    scraperLogger.info(
+      {
+        url,
+        companyName: companyData.companyName,
+        contentLength: companyData.description.length,
+      },
+      `Successfully scraped ${companyData.companyName}`
     );
 
     return {
@@ -98,7 +104,7 @@ export async function scrapeCompany(options: ScraperOptions): Promise<CompanyDat
       scrapedAt: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('Scraping error:', error);
+    scraperLogger.error({ error, url }, 'Scraping failed');
     throw error;
   } finally {
     await browser.close();
@@ -110,7 +116,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const targetUrl = process.argv[2];
 
   if (!targetUrl) {
-    console.error('Usage: bun run scrape <url>');
+    scraperLogger.error('Usage: bun run scrape <url>');
     process.exit(1);
   }
 
@@ -118,11 +124,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     .then((data) => {
       const db = initDatabase();
       const id = insertCompany(db, data);
-      console.log(`✓ Company saved to database with ID: ${id}`);
+      scraperLogger.info(
+        { id, companyName: data.companyName },
+        `Company saved to database with ID: ${id}`
+      );
       db.close();
     })
     .catch((error) => {
-      console.error('Failed to scrape:', error);
+      scraperLogger.error({ error }, 'Failed to scrape');
       process.exit(1);
     });
 }
