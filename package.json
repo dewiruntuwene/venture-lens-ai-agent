@@ -7,6 +7,7 @@
     "dev": "bun --watch src/api/index.ts",
     "scrape": "bun src/scrapers/scrape.ts",
     "batch-scrape": "bun src/cli/batch-scrape.ts",
+    "reset-db": "bun src/cli/reset-db.ts",
     "analyze": "bun src/ai/analyzer.ts",
     "start": "bun src/api/index.ts",
     "format": "prettier --write .",
