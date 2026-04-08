@@ -1,0 +1,15 @@
+meta {
+  name: "Health Check"
+  type: "http"
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/
+  body: none
+  auth: none
+}
+
+docs {
+  Returns the health status of the API and a list of available endpoints.
+}

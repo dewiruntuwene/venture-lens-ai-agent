@@ -1,0 +1,19 @@
+meta {
+  name: "Get Company by ID"
+  type: "http"
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/companies/1
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 1
+}
+
+docs {
+  Fetches details for a specific company by its database ID.
+}

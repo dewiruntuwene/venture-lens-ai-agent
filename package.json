@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/api/index.ts",
-    "scrape": "bun src/scraper/scrape.ts",
-    "analyze": "bun src/agents/analyzer.ts",
+    "scrape": "bun src/scrapers/scrape.ts",
+    "analyze": "bun src/ai/analyzer.ts",
     "start": "bun src/api/index.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

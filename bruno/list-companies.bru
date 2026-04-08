@@ -1,0 +1,15 @@
+meta {
+  name: "List Companies"
+  type: "http"
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/companies
+  body: none
+  auth: none
+}
+
+docs {
+  Retrieves a list of all scraped and analyzed companies in the database.
+}

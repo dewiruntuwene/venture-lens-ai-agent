@@ -1,18 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { join } from 'path';
-
-export interface CompanyData {
-  id?: number;
-  companyName: string;
-  description: string;
-  website: string;
-  industry: string;
-  businessModel: string;
-  summary: string;
-  useCase: string;
-  scrapedAt?: string;
-  analysis?: string;
-}
+import { type CompanyData } from '../types/index.js';
 
 export function initDatabase(): Database {
   const dbPath = join(process.cwd(), 'data', 'ventures.db');
@@ -141,6 +129,10 @@ export function updateCompany(db: Database, id: number, company: Partial<Company
   if (company.useCase !== undefined) {
     fields.push('use_case = ?');
     values.push(company.useCase);
+  }
+  if (company.analysis !== undefined) {
+    fields.push('analysis = ?');
+    values.push(company.analysis);
   }
 
   if (fields.length === 0) return;

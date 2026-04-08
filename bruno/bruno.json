@@ -1,0 +1,9 @@
+{
+  "name": "Venture Lens AI Agent",
+  "version": "1",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

@@ -1,29 +1,34 @@
 # Venture Lens AI Agent
 
-An AI-powered venture capital analysis platform that scrapes venture information and provides intelligent analysis using Claude AI.
+An AI-powered venture capital analysis platform that scrapes venture information and provides intelligent, structured insights using OpenRouter and the Qwen model.
 
 ## Features
 
-- **Web Scraping**: Extract venture information from websites using Playwright
-- **AI Analysis**: Analyze ventures using Anthropic's Claude AI for market potential, risks, and investment viability
-- **SQLite Database**: Store and manage venture data efficiently
-- **REST API**: Hono-based API for interacting with the system
+- **Web Scraping**: Extract venture information from websites using Playwright.
+- **AI Analysis**: Generate structured insights using OpenRouter (`qwen/qwen3-next-80b-a3b-instruct:free`):
+  - **Industry Classification**: Automated tagging (e.g., FinTech, HealthTech, Developer Tools).
+  - **Business Model**: Analysis of revenue approach (e.g., B2B, B2C, SaaS, Marketplace).
+  - **One-Sentence Summary**: Concise value proposition.
+  - **Potential Use Cases**: Specific applications of the technology/service.
+  - **Comprehensive VC Analysis**: Markdown report on market potential, risks, and viability.
+- **SQLite Database**: Store and manage venture data efficiently.
+- **REST API**: Hono-based API for interacting with the system.
 
 ## Tech Stack
 
-- **Bun**: Fast all-in-one JavaScript runtime
-- **TypeScript**: Type-safe development
-- **Hono**: Fast web framework
-- **better-sqlite3**: Efficient SQLite database
-- **Playwright**: Reliable web scraping
-- **Anthropic Claude**: Advanced AI analysis
+- **Bun**: Fast all-in-one JavaScript runtime.
+- **TypeScript**: Type-safe development.
+- **Hono**: Fast web framework.
+- **SQLite (via Bun:sqlite)**: Efficient SQLite database.
+- **Playwright**: Reliable web scraping.
+- **OpenRouter**: Access to top LLMs including Qwen.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Bun runtime installed
-- Anthropic API key
+- Bun runtime installed.
+- OpenRouter API key.
 
 ### Installation
 
@@ -49,7 +54,7 @@ bun run prepare
 
 ```bash
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+# Edit .env and add your OPENROUTER_API_KEY
 ```
 
 ## Usage
@@ -65,7 +70,7 @@ The server will start at `http://localhost:3000`
 ### Scrape a Venture
 
 ```bash
-bun run scrape https://example.com
+bun run scrape <url>
 ```
 
 ### Analyze Ventures
@@ -74,58 +79,28 @@ bun run scrape https://example.com
 bun run analyze
 ```
 
-This will analyze all ventures in the database that haven't been analyzed yet.
+This will analyze all ventures in the database that haven't been analyzed yet or have "Unknown" industry tags.
 
 ## API Endpoints
 
 - `GET /` - API information
-- `GET /ventures` - List all ventures
-- `GET /ventures/:id` - Get venture by ID
-- `POST /ventures/scrape` - Scrape a new venture
+- `GET /companies` - List all companies
+- `GET /companies/:id` - Get company by ID
+- `POST /companies/scrape` - Scrape a new company
   ```json
   {
     "url": "https://example.com"
   }
   ```
-- `POST /ventures/:id/analyze` - Analyze a specific venture
+- `POST /companies/:id/analyze` - Analyze a specific company
 
 ## Project Structure
 
 ```
 src/
 ├── api/          # API route handlers (Hono)
-├── db/           # Database models and queries (better-sqlite3)
+├── db/           # Database models and queries (Bun:sqlite)
 ├── scraper/      # Web scrapers (Playwright)
-├── agents/       # AI analysis agents (Claude API)
+├── agents/       # AI analysis agents (OpenRouter API)
 └── data/         # SQLite database storage
 ```
-
-## Development
-
-The project follows clean architecture principles with modular, single-responsibility components. See [CLAUDE.md](./CLAUDE.md) for detailed coding guidelines.
-
-### Code Quality
-
-The project uses automated checks via Lefthook git hooks:
-
-**Pre-commit hooks:**
-
-- Prettier formatting (auto-formats staged files)
-- TypeScript type checking
-
-**Pre-push hooks:**
-
-- Prettier format verification
-- TypeScript type checking
-
-**Manual commands:**
-
-```bash
-bun run format        # Format all files with Prettier
-bun run format:check  # Check formatting without changes
-bun run type-check    # Run TypeScript type checking
-```
-
-## License
-
-MIT
