@@ -5,9 +5,8 @@ An AI-powered venture capital analysis platform that collects company informatio
 ## Features
 
 - **Intelligent Web Scraping**: Extract company information from websites using Playwright
-- **Multi-Agent AI Analysis**: Powered by Anthropic Claude via Vercel AI SDK
+- **AI Analysis**: Powered by Anthropic Claude via Vercel AI SDK
   - **Basic Analysis**: Industry classification, business model, summary, and use cases
-  - **Deep Insights**: Multi-agent parallel analysis providing:
     - Competitive landscape analysis
     - Financial viability assessment
     - Market size and growth analysis
@@ -30,7 +29,6 @@ An AI-powered venture capital analysis platform that collects company informatio
 - **Playwright**: Reliable web scraping
 - **Vercel AI SDK**: Unified AI interface
 - **OpenRouter**: Access to multiple AI models (free tier available)
-- **Anthropic Claude**: Alternative AI provider (Claude 3.5 Sonnet)
 - **Zod**: Runtime type validation
 - **Pino**: High-performance structured logging
 
@@ -75,20 +73,12 @@ bun run prepare
 cp .env.example .env
 ```
 
-**Option A: Using OpenRouter (Recommended - Free tier available)**
+**Using OpenRouter (Recommended - Free tier available)**
 
 ```bash
 # Edit .env:
 USE_OPENROUTER=true
 OPENROUTER_API_KEY=your_openrouter_api_key_here
-```
-
-**Option B: Using Anthropic Claude**
-
-```bash
-# Edit .env:
-USE_OPENROUTER=false
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
 ```
 
 **Additional settings:**

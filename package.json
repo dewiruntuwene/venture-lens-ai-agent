@@ -24,7 +24,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.68",
     "@ai-sdk/openai": "^3.0.52",
     "@hono/node-server": "^1.14.0",
     "ai": "^6.0.152",

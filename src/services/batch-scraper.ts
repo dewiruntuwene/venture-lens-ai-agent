@@ -8,7 +8,7 @@ import {
 import { scrapeProductHunt } from '../scrapers/product-hunt-scraper.js';
 import { scrapeYCombinator } from '../scrapers/ycombinator-scraper.js';
 import { serviceLogger } from '../utils/logger.js';
-import { cleanDescription } from '../utils/data-cleaner.js';
+import type { AnalysisResult } from '../types/index.js';
 
 export type DataSource = 'github-trending' | 'github-awesome' | 'product-hunt' | 'ycombinator';
 
@@ -89,18 +89,14 @@ export async function batchScrapeAndAnalyze(
 
     for (const company of scrapedCompanies) {
       try {
-        // Clean description before saving and analysis
-        const cleanedDescription = cleanDescription(company.description);
-        const cleanedSummary = cleanDescription(company.description, 500);
-
         // Prepare company data with defaults
         const companyData = {
           companyName: company.companyName,
-          description: cleanedDescription,
+          description: company.description,
           website: company.website,
           industry: 'Unknown',
           businessModel: 'Unknown',
-          summary: cleanedSummary,
+          summary: company.description,
           useCase: 'Unknown',
           scrapedAt: new Date().toISOString(),
         };
@@ -116,9 +112,10 @@ export async function batchScrapeAndAnalyze(
         // Analyze if requested
         if (analyze) {
           try {
-            // Add a small delay between analyses to avoid rate limits, especially for free models
-            if (result.totalScraped > 1) {
-              const delay = process.env.USE_OPENROUTER === 'true' ? 5000 : 1000;
+            // Add a delay between analyses to avoid rate limits, especially for free models
+            if (result.totalAnalyzed > 0) {
+              // Longer delay for free models to avoid rate limiting and timeouts
+              const delay = 8000; // 8 seconds between analyses
               serviceLogger.debug({ delay }, `Waiting ${delay}ms before next analysis...`);
               await new Promise((resolve) => setTimeout(resolve, delay));
             }
@@ -128,7 +125,46 @@ export async function batchScrapeAndAnalyze(
               `Analyzing company ${company.companyName}...`
             );
 
-            const analysisResult = await analyzeCompany(companyData);
+            // Retry logic with exponential backoff for rate limits
+            let analysisResult: AnalysisResult | undefined;
+            let retryCount = 0;
+            const maxRetries = 3;
+
+            while (retryCount <= maxRetries) {
+              try {
+                analysisResult = await analyzeCompany(companyData);
+                break; // Success, exit retry loop
+              } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+                // Check if it's a rate limit error
+                if (
+                  errorMessage.includes('429') ||
+                  errorMessage.includes('rate-limited') ||
+                  errorMessage.includes('rate limited')
+                ) {
+                  retryCount++;
+                  if (retryCount > maxRetries) {
+                    throw error; // Max retries exceeded
+                  }
+
+                  // Exponential backoff: 15s, 30s, 60s
+                  const backoffDelay = 15000 * Math.pow(2, retryCount - 1);
+                  serviceLogger.warn(
+                    { companyName: company.companyName, retryCount, backoffDelay },
+                    `Rate limited. Waiting ${backoffDelay}ms before retry ${retryCount}/${maxRetries}...`
+                  );
+                  await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+                } else {
+                  throw error; // Non-rate-limit error, don't retry
+                }
+              }
+            }
+
+            // Ensure we have a valid result
+            if (!analysisResult) {
+              throw new Error('Analysis failed: No result returned after retries');
+            }
 
             // Update with analysis
             db.prepare(

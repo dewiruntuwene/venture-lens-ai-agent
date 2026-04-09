@@ -7,7 +7,7 @@
 - **Framework**: Hono
 - **Database**: SQLite
 - **Scraper**: Playwright
-- **AI**: Anthropic Claude API
+- **AI**: Openrouter
 
 ## Code Style & Architecture
 
